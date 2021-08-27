@@ -33,6 +33,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="OmniWheelsOp Test", group="Iterative Opmode")
 
 public class MainOp_2 extends LinearOpMode {
+    // Constant to change motor speed by x
+    private final double ReduceByRight = 0.1;
     // Configure Items from Control Hub 1:
     // Configure 1st Control Hub: The perfect one, just like Connor
     private Blinker Connor_Craig_IB_Student_Of_Last_Year;
@@ -51,8 +53,6 @@ public class MainOp_2 extends LinearOpMode {
     private DcMotor YeshwantArms;
     private DcMotor YeshwantFlag;
     private Servo YeshwantFingers;
-
-
     // Set up variables for omni driving:
     private double drive;
     private double turn;
@@ -63,12 +63,12 @@ public class MainOp_2 extends LinearOpMode {
     // Yeshwant's Arms:
     private int armpos = 250;
     private boolean armmoving = false;
-    private int armmovmultiplier = 20;
+    private int armmovmultiplier = 1;
     private boolean manualArmControlDisabled = false;
     private double lastTime = 0;
 
     // Yeshwant's Flag:
-    private int flagpos = 250;
+    private int flagpos = 4258;
     private boolean flagmoving = false;
     private int flagmovmultiplier = 20;
     private boolean manualFlagControlDisabled = false;
@@ -102,6 +102,10 @@ public class MainOp_2 extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         // Reset encoders for Position motors (Step 1)
         YeshwantArms.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         YeshwantFlag.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -126,18 +130,23 @@ public class MainOp_2 extends LinearOpMode {
             // Set drive and turn from left stick
             drive = -gamepad1.left_stick_y;
             turn  =  gamepad1.left_stick_x;
-            // Calculate Overall Movement
             left  = drive + turn;
             right = drive - turn;
-            frontLeft.setPower(left);
-            telemetry.addData("Setting front left power: ", frontLeft.getPower());
-            frontRight.setPower(-right);
-            telemetry.addData("Setting front RIGHT power: ", frontRight.getPower());
-
-            backLeft.setPower(drive);
-            telemetry.addData("Setting back left power: ", backLeft.getPower());
-            backRight.setPower(-drive);
-            telemetry.addData("Setting back right power: ", backRight.getPower());
+            // Calculate Overall Movement
+            if (drive > 1) {
+                drive = drive / 2;
+            }
+            if (left > 1) {
+                left = left / 2;
+                right = right / 2;
+            }
+            if (right > 1) {
+                left = left / 2;
+                right = right / 2;
+            }
+            else {
+                //Do nothing
+            }
             //Omni Wheels Code
             turnOm  =  gamepad1.right_stick_x;
             if(turnOm<0) {
@@ -147,20 +156,23 @@ public class MainOp_2 extends LinearOpMode {
                 frontLeft.setPower(-turnOm);
                 backLeft.setPower(turnOm);
             }
-            else {
+            else if(turnOm>0) {
                 // Move left in and right out
-                frontRight.setPower(turnOm);
-                backRight.setPower(-turnOm);
-                frontLeft.setPower(turnOm);
-                backLeft.setPower(-turnOm);
+                frontRight.setPower(-turnOm);
+                backRight.setPower(turnOm);
+                frontLeft.setPower(-turnOm);
+                backLeft.setPower(turnOm);
 
+            }
+            else {
+                //Do Nothing
             }
             // Limb Movement
             if (gamepad2.a && YeshwantFlag.isBusy()==false) {
                 manualFlagControlDisabled = true;
                 // If the flag is not at the starting position, i.e. retracted,
                 // move flag to starting position
-                if (YeshwantFlag.getTargetPosition()!=0) {
+                if (YeshwantFlag.getCurrentPosition()!=0) {
                     telemetry.addLine("Retracting Yeshwant Flag");
                     // Set target position (Step 3)
                     YeshwantFlag.setTargetPosition(flagpos);
@@ -229,6 +241,7 @@ public class MainOp_2 extends LinearOpMode {
                 // Give control of flag back to user
                 manualFlagControlDisabled = false;
             }
+            /*
             if (gamepad2.right_trigger>=0) {
                 manualArmControlDisabled = true;
                 telemetry.addData("Extending Arm",YeshwantArms.getTargetPosition());
@@ -243,6 +256,7 @@ public class MainOp_2 extends LinearOpMode {
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 YeshwantArms.setPower(gamepad2.left_trigger);
             }
+             */
             if (gamepad2.dpad_down && manualFlagControlDisabled == false) {
 
                 // set delta time = current time - last time
@@ -264,10 +278,12 @@ public class MainOp_2 extends LinearOpMode {
             if (!manualFingerControlDisabled) {
                 YeshwantFingers.setPosition(gamepad2.right_stick_x);
             }
+            telemetry.addData("PowerData",armmovmultiplier*gamepad2.left_stick_y);
             // Set the position of Yeshwant's arms
-            if (!manualArmControlDisabled) {
+            if (!manualArmControlDisabled && gamepad2.left_stick_y!=0) {
+                telemetry.addLine("Connor");
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                YeshwantArms.setPower(armmovmultiplier*gamepad2.left_stick_y);
+                YeshwantArms.setPower(armmovmultiplier*-gamepad2.left_stick_y);
                 armmoving = true;
             }
             // Allow Yeshwant Arm override
@@ -312,6 +328,17 @@ public class MainOp_2 extends LinearOpMode {
             telemetry.addData("Arm Moving",armmoving);
             telemetry.addData("Flag Moving",flagmoving);
             telemetry.addData("Flag Position",YeshwantFlag.getCurrentPosition());
+            telemetry.addData("Arm Disabled",manualArmControlDisabled);
+            frontLeft.setPower(-left);
+            telemetry.addData("Setting front left power: ", frontLeft.getPower());
+            frontRight.setPower(right);
+            telemetry.addData("Setting front RIGHT power: ", frontRight.getPower());
+
+            backLeft.setPower(-drive);
+            telemetry.addData("Setting back left power: ", backLeft.getPower());
+            backRight.setPower(drive);
+            telemetry.addData("Setting back right power: ", backRight.getPower());
+
             telemetry.update();
         }
     }
