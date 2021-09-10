@@ -72,6 +72,7 @@ public class MainOp_2 extends LinearOpMode {
     private boolean flagmoving = false;
     private int flagmovmultiplier = 20;
     private boolean manualFlagControlDisabled = false;
+    private double target = YeshwantFingers.MIN_POSITION;
     // Yeshwant's Fingers:
     private boolean manualFingerControlDisabled;
     @Override
@@ -202,11 +203,13 @@ public class MainOp_2 extends LinearOpMode {
             if (gamepad2.x) {
                 // Please note it will close when halfway open. This is not a rounding process.
                 manualFingerControlDisabled = true;
-                if (YeshwantFingers.getPosition()!=YeshwantFingers.MIN_POSITION) {
-                    YeshwantFingers.setPosition(YeshwantFingers.MIN_POSITION);
-                }
-                else {
-                    YeshwantFingers.setPosition(YeshwantFingers.MAX_POSITION);
+                if (YeshwantFingers.getPosition()==target) {
+                    if (YeshwantFingers.getPosition()!=YeshwantFingers.MIN_POSITION) {
+                        YeshwantFingers.setPosition(YeshwantFingers.MIN_POSITION);
+                    }
+                    else {
+                        YeshwantFingers.setPosition(YeshwantFingers.MAX_POSITION);
+                    }
                 }
             }
             if (gamepad2.dpad_up && manualFlagControlDisabled==false) {
@@ -271,7 +274,7 @@ public class MainOp_2 extends LinearOpMode {
                     // the jerking motion.
                     flagmoving = true;
                     YeshwantFlag.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    YeshwantFlag.setPower(-1);
+                    YeshwantFlag.setPower(0.5);
                 }
             }
             // Set the position of Yeshwant's fingers
