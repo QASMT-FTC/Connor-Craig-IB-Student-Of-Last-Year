@@ -30,7 +30,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="OmniWheelsOp Test", group="Iterative Opmode")
+@TeleOp(name="[Production] OmniwheelsOp", group="Iterative Opmode")
 
 public class MainOp_2 extends LinearOpMode {
     // Constant to change motor speed by x
