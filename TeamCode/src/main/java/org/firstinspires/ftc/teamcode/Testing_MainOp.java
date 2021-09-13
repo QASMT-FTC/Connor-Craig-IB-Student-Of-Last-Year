@@ -141,9 +141,6 @@ public class Testing_MainOp extends LinearOpMode {
                 left = left / 2;
                 right = right / 2;
             }
-            else {
-                //Do nothing
-            }
             //Omni Wheels Code
             turnOm  =  gamepad1.right_stick_x;
             if(turnOm<0) {
