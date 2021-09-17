@@ -21,4 +21,9 @@ android {
     }
 }
 
+dependencies {
+    implementation files('..\\libs\\threetenbp-1.5.1.jar')
+}
+
+
 apply from: '../build.dependencies.gradle'

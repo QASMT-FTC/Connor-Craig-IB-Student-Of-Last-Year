@@ -1,4 +1,3 @@
-package org.firstinspires.ftc.teamcode;
 /*
 Copyright 2018 FIRST Tech Challenge Team 13710
 
@@ -17,10 +16,7 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FO
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -33,9 +29,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import java.time.Duration;
-import java.time.Instant;
 
 @TeleOp(name="[Testing] OmniwheelsOp", group="Iterative Opmode")
 
@@ -82,11 +75,6 @@ public class Testing_MainOp extends LinearOpMode {
     private double target = YeshwantFingers.MIN_POSITION;
     // Yeshwant's Fingers:
     private boolean manualFingerControlDisabled;
-    // instant for Servo:
-    private Instant servo_start;
-    // time it takes for servo to move to position (adjust):
-    private Integer servospintime = 500;
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void runOpMode() {
         // Configure Items from Control Hub 1:
@@ -127,10 +115,14 @@ public class Testing_MainOp extends LinearOpMode {
         YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
+
         // set current time
         ElapsedTime runtime = new ElapsedTime();
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+
+
             // Initialisation:
             telemetry.addData("Status", "Running");
             flagmoving = false;
@@ -153,21 +145,8 @@ public class Testing_MainOp extends LinearOpMode {
                 left = left / 2;
                 right = right / 2;
             }
-            //Busy Check - Check if motors are busy, if busy, set variables accordingly
-            if (!YeshwantFlag.isBusy()) {
-                manualFlagControlDisabled = false;
-            }
-            if (!YeshwantArms.isBusy()) {
-                    manualArmControlDisabled = false;
-                }
-            if (!YeshwantFlag.isBusy()) {
-                manualFlagControlDisabled = false;
-            }
-            if (servo_start!=null) {
-                if(Duration.between(servo_start,Instant.now()).toMillis()>=servospintime) {
-                    servo_start = null;
-                    manualFingerControlDisabled = false;
-                }
+            else {
+                //Do nothing
             }
             //Omni Wheels Code
             turnOm  =  gamepad1.right_stick_x;
@@ -186,6 +165,9 @@ public class Testing_MainOp extends LinearOpMode {
                 backLeft.setPower(turnOm);
 
             }
+            else {
+                //Do Nothing
+            }
             // Limb Movement
             if (gamepad2.a && YeshwantFlag.isBusy()==false) {
                 manualFlagControlDisabled = true;
@@ -195,28 +177,36 @@ public class Testing_MainOp extends LinearOpMode {
                     telemetry.addLine("Retracting Yeshwant Flag");
                     // Set target position (Step 3)
                     YeshwantFlag.setTargetPosition(flagpos);
+                    // Set mode to run to position (Step 4)
+                    YeshwantFlag.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    // Set power (Step 5)
+                    YeshwantFlag.setPower(1);
+                    // In case you are wondering, there is no need for the flagMoving
+                    // variable here, because, the motor will not brake until the end of
+                    // the movement.
                 }
                 else {
                     manualFlagControlDisabled = true;
                     telemetry.addLine("Extending Yeshwant Flag");
                     // Set target position (Step 3)
-                    YeshwantFlag.setTargetPosition(0);
+                    YeshwantFlag.setTargetPosition(flagpos);
+                    // Set mode to run to position (Step 4)
+                    YeshwantFlag.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    // Set power (Step 5)
+                    YeshwantFlag.setPower(1);
+                    // In case you are wondering, there is no need for the flagMoving
+                    // variable here, because, the motor will not brake until the end of
+                    // the movement.
                 }
-                // Set mode to run to position (Step 4)
-                // In case you are wondering, there is no need for the flagMoving
-                // variable here, because, the motor will not brake until the end of
-                // the movement.
-                YeshwantFlag.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                // Set power (Step 5)
-                YeshwantFlag.setPower(1);
             }
             // Toggle fingers
             if (gamepad2.x) {
                 // Please note it will close when halfway open. This is not a rounding process.
                 manualFingerControlDisabled = true;
-                servo_start = Instant.now();
+                if (YeshwantFingers.getPosition()==target) {
                     if (YeshwantFingers.getPosition()!=YeshwantFingers.MIN_POSITION) {
                         YeshwantFingers.setPosition(YeshwantFingers.MIN_POSITION);
+                        target = YeshwantFingers.MIN_POSITION;
                     }
                     else {
                         YeshwantFingers.setPosition(YeshwantFingers.MAX_POSITION);
@@ -231,6 +221,8 @@ public class Testing_MainOp extends LinearOpMode {
 
                 //set the lastTime
                 lastTime = runtime.milliseconds();
+
+
                 if (deltaTime<=500&&YeshwantFlag.isBusy()==false) {
                     // Set flag moving variable to true, to make the arm coast, to prevent
                     // the jerking motion.
@@ -254,19 +246,19 @@ public class Testing_MainOp extends LinearOpMode {
                 // Give control of flag back to user
                 manualFlagControlDisabled = false;
             }
-            if (gamepad2.right_trigger>=0) {
+            if (gamepad2.right_trigger>0) {
                 manualArmControlDisabled = true;
                 telemetry.addData("Extending Arm",YeshwantArms.getTargetPosition());
                 YeshwantArms.setTargetPosition(armpos);
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                YeshwantArms.setPower(gamepad2.right_trigger);
+                YeshwantArms.setPower(1);
             }
-            if (gamepad2.left_trigger>=0) {
+            if (gamepad2.left_trigger>0) {
                 manualArmControlDisabled = true;
                 telemetry.addData("Retracting Arm",YeshwantArms.getTargetPosition());
                 YeshwantArms.setTargetPosition(0);
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                YeshwantArms.setPower(gamepad2.left_trigger);
+                YeshwantArms.setPower(1);
             }
             if (gamepad2.dpad_down && manualFlagControlDisabled == false) {
 
@@ -281,30 +273,24 @@ public class Testing_MainOp extends LinearOpMode {
                     // Set flag moving variable to true, to make the arm coast, to prevent
                     // the jerking motion.
                     flagmoving = true;
-                    // Set target position (Step 3)
-                    YeshwantFlag.setTargetPosition(YeshwantFlag.getCurrentPosition()+armmovmultiplier);
-                    // Set mode to run to position (Step 4)
-                    YeshwantFlag.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                    // Set power (Step 5)
-                    YeshwantFlag.setPower(1);
+                    YeshwantFlag.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    YeshwantFlag.setPower(0.5);
                 }
             }
             // Set the position of Yeshwant's fingers
             if (!manualFingerControlDisabled) {
-                //Basic logic - if the position set is bigger than the max allowed, take max, if smaller than min,
-                //take min (Ducks cannot be trusted to control robots)
-                YeshwantFingers.setPosition(Math.max(YeshwantFingers.MIN_POSITION,Math.min(1,YeshwantFingers.MAX_POSITION + gamepad2.right_stick_x)));
+                YeshwantFingers.setPosition(gamepad2.right_stick_x);
             }
             telemetry.addData("PowerData",armmovmultiplier*gamepad2.left_stick_y);
             // Set the position of Yeshwant's arms
-            if (!manualArmControlDisabled && gamepad2.left_stick_y != 0) {
+            if (!manualArmControlDisabled && gamepad2.left_stick_y!=0) {
                 telemetry.addLine("Connor");
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 YeshwantArms.setPower(armmovmultiplier*-gamepad2.left_stick_y);
                 armmoving = true;
             }
             // Allow Yeshwant Arm override
-            if (gamepad2.left_stick_y>=0 && manualFlagControlDisabled && gamepad2.left_bumper) {
+            if (gamepad2.left_stick_y>=0 && !manualFlagControlDisabled && gamepad2.left_bumper) {
                 // Emergency Override Code
                 telemetry.addData("ALERT! Emergency Override of Arm!",YeshwantArms.getTargetPosition());
                 // Set target position (Step 3)
@@ -349,13 +335,14 @@ public class Testing_MainOp extends LinearOpMode {
             frontLeft.setPower(-left);
             telemetry.addData("Setting front left power: ", frontLeft.getPower());
             frontRight.setPower(right);
-            telemetry.addData("Setting front right power: ", frontRight.getPower());
+            telemetry.addData("Setting front RIGHT power: ", frontRight.getPower());
 
-            backLeft.setPower(-left);
+            backLeft.setPower(-drive);
             telemetry.addData("Setting back left power: ", backLeft.getPower());
-            backRight.setPower(right);
+            backRight.setPower(drive);
             telemetry.addData("Setting back right power: ", backRight.getPower());
 
             telemetry.update();
         }
     }
+}
