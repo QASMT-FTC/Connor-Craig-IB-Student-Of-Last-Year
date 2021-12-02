@@ -29,6 +29,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
+import java.text.DecimalFormat;
 
 @TeleOp(name="[Testing] OmniwheelsOp", group="Iterative Opmode")
 
@@ -52,6 +55,8 @@ public class Testing_MainOp extends LinearOpMode {
     // Configure Yeshwant's Body parts
     private DcMotor YeshwantArms;
     private DcMotor YeshwantFlag;
+    private DcMotor Extender;
+
     private Servo YeshwantFingers;
     // Set up variables for omni driving:
     private double drive;
@@ -67,14 +72,24 @@ public class Testing_MainOp extends LinearOpMode {
     private boolean manualArmControlDisabled = false;
     private double lastTime = 0;
 
+    //Extender
+    private double extenderPower = 0.2d;
+    private boolean extenderMoving = false;
+
     // Yeshwant's Flag:
     private int flagpos = 4258;
     private boolean flagmoving = false;
     private int flagmovmultiplier = 20;
     private boolean manualFlagControlDisabled = false;
-    private double target = YeshwantFingers.MIN_POSITION;
-    // Yeshwant's Fingers:
+
+
+    // Claw:
     private boolean manualFingerControlDisabled;
+    private Servo ServoRight;
+    private Servo ServoLeft;
+    private double target = ServoRight.MIN_POSITION;
+    private boolean servoMoving = false;
+
     @Override
     public void runOpMode() {
         // Configure Items from Control Hub 1:
@@ -95,6 +110,11 @@ public class Testing_MainOp extends LinearOpMode {
         YeshwantArms = hardwareMap.get(DcMotor.class,"YeshwantArms");
         YeshwantFlag = hardwareMap.get(DcMotor.class,"YeshwantFlag");
         YeshwantFingers = hardwareMap.get(Servo.class,"YeshwantFingers");
+        ServoLeft = hardwareMap.get(Servo.class, "ServoLeft");
+        ServoRight = hardwareMap.get(Servo.class, "ServoRight");
+
+        Extender = hardwareMap.get(DcMotor.class, "extender");
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         // Setting modes for non-position motors (i.e. ones where power is controlled,
@@ -103,16 +123,24 @@ public class Testing_MainOp extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         // Reset encoders for Position motors (Step 1)
         YeshwantArms.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         YeshwantFlag.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        Extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Set the zero power behaviour to brake - we'll change it for the smoothness of motion later (Step 2)!
         YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Extender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
@@ -127,47 +155,49 @@ public class Testing_MainOp extends LinearOpMode {
             telemetry.addData("Status", "Running");
             flagmoving = false;
             armmoving = false;
+            extenderMoving = false;
             // Real Driving Code:
             // Set drive and turn from left stick
-            drive = -gamepad1.left_stick_y;
-            turn  =  gamepad1.left_stick_x;
-            left  = drive + turn;
-            right = drive - turn;
-            // Calculate Overall Movement
-            if (drive > 1) {
-                drive = drive / 2;
-            }
-            if (left > 1) {
-                left = left / 2;
-                right = right / 2;
-            }
-            if (right > 1) {
-                left = left / 2;
-                right = right / 2;
-            }
-            else {
-                //Do nothing
-            }
-            //Omni Wheels Code
-            turnOm  =  gamepad1.right_stick_x;
-            if(turnOm<0) {
-                // Move left out and right in
-                frontRight.setPower(-turnOm);
-                backRight.setPower(turnOm);
-                frontLeft.setPower(-turnOm);
-                backLeft.setPower(turnOm);
-            }
-            else if(turnOm>0) {
-                // Move left in and right out
-                frontRight.setPower(-turnOm);
-                backRight.setPower(turnOm);
-                frontLeft.setPower(-turnOm);
-                backLeft.setPower(turnOm);
-
-            }
-            else {
-                //Do Nothing
-            }
+//            drive = -gamepad1.left_stick_y;
+//            turn  =  gamepad1.left_stick_x;
+//            left  = drive + turn;
+//            right = drive - turn;
+//            // Calculate Overall Movement
+//            if (drive > 1) {
+//                drive = drive / 2;
+//            }
+//            if (left > 1) {
+//                left = left / 2;
+//                right = right / 2;
+//            }
+//            if (right > 1) {
+//                left = left / 2;
+//                right = right / 2;
+//            }
+//            else {
+//                //Do nothing
+//            }
+//            //Omni Wheels Code
+//            turnOm  =  gamepad1.right_stick_x;
+//            if(turnOm<0) {
+//                // Move left out and right in
+//                frontRight.setPower(-turnOm);
+//                backRight.setPower(turnOm);
+//                frontLeft.setPower(-turnOm);
+//                backLeft.setPower(turnOm);
+//            }
+//            else if(turnOm>0) {
+//                // Move left in and right out
+//                frontRight.setPower(-turnOm);
+//                backRight.setPower(turnOm);
+//                frontLeft.setPower(-turnOm);
+//                backLeft.setPower(turnOm);
+//
+//            }
+//            else {
+//                //Do Nothing
+//            }
+            mecanum(gamepad1);
             // Limb Movement
             if (gamepad2.a && YeshwantFlag.isBusy()==false) {
                 manualFlagControlDisabled = true;
@@ -199,21 +229,24 @@ public class Testing_MainOp extends LinearOpMode {
                     // the movement.
                 }
             }
-            // Toggle fingers
+            // Toggle Claw
             if (gamepad2.x) {
                 // Please note it will close when halfway open. This is not a rounding process.
+                servoMoving = true;
                 manualFingerControlDisabled = true;
-                if (YeshwantFingers.getPosition()==target) {
-                    if (YeshwantFingers.getPosition()!=YeshwantFingers.MIN_POSITION) {
-                        YeshwantFingers.setPosition(YeshwantFingers.MIN_POSITION);
-                        target = YeshwantFingers.MIN_POSITION;
+                if (ServoLeft.getPosition()==target) {
+                    if (ServoLeft.getPosition()!=ServoLeft.MIN_POSITION) {
+                        ServoLeft.setPosition(ServoLeft.MIN_POSITION);
+                        target = ServoLeft.MIN_POSITION;
                     }
                     else {
-                        YeshwantFingers.setPosition(YeshwantFingers.MAX_POSITION);
-                        target = YeshwantFingers.MAX_POSITION;
+                        ServoLeft.setPosition(ServoLeft.MAX_POSITION);
+                        target = ServoLeft.MAX_POSITION;
                     }
                 }
             }
+
+            /*
             if (gamepad2.dpad_up && manualFlagControlDisabled==false) {
 
                 // set delta time = current time - last time
@@ -246,6 +279,8 @@ public class Testing_MainOp extends LinearOpMode {
                 // Give control of flag back to user
                 manualFlagControlDisabled = false;
             }
+            */
+
             if (gamepad2.right_trigger>0) {
                 manualArmControlDisabled = true;
                 telemetry.addData("Extending Arm",YeshwantArms.getTargetPosition());
@@ -260,6 +295,7 @@ public class Testing_MainOp extends LinearOpMode {
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 YeshwantArms.setPower(1);
             }
+            /*
             if (gamepad2.dpad_down && manualFlagControlDisabled == false) {
 
                 // set delta time = current time - last time
@@ -277,6 +313,8 @@ public class Testing_MainOp extends LinearOpMode {
                     YeshwantFlag.setPower(0.5);
                 }
             }
+            */
+
             // Set the position of Yeshwant's fingers
             if (!manualFingerControlDisabled) {
                 YeshwantFingers.setPosition(gamepad2.right_stick_x);
@@ -289,6 +327,30 @@ public class Testing_MainOp extends LinearOpMode {
                 YeshwantArms.setPower(armmovmultiplier*-gamepad2.left_stick_y);
                 armmoving = true;
             }
+
+            //Extender movement
+            if (gamepad2.dpad_up){
+                Extender.setMode((DcMotor.RunMode.RUN_USING_ENCODER));
+                //CHANGE THIS POWER
+                Extender.setPower(extenderPower);
+                extenderMoving = true;
+
+            } else if (!gamepad2.dpad_up && !gamepad2.dpad_down){
+                Extender.setPower(0);
+                extenderMoving = false;
+            }
+
+            if (gamepad2.dpad_down){
+                Extender.setMode((DcMotor.RunMode.RUN_USING_ENCODER));
+                //CHANGE THIS POWER
+                Extender.setPower(-extenderPower);
+                extenderMoving = true;
+            } else if (!gamepad2.dpad_up && !gamepad2.dpad_down){
+                Extender.setPower(0);
+                extenderMoving = false;
+            }
+
+
             // Allow Yeshwant Arm override
             if (gamepad2.left_stick_y>=0 && !manualFlagControlDisabled && gamepad2.left_bumper) {
                 // Emergency Override Code
@@ -305,6 +367,9 @@ public class Testing_MainOp extends LinearOpMode {
                 // Give control of flag back to user
                 manualArmControlDisabled = false;
             }
+
+            //Extender for arm
+
             if (YeshwantArms.isBusy()) {
                 armmoving = true;
             }
@@ -313,7 +378,6 @@ public class Testing_MainOp extends LinearOpMode {
             }
 
             if (armmoving) {
-                YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                 armmoving = false;
             }
             else {
@@ -329,7 +393,8 @@ public class Testing_MainOp extends LinearOpMode {
                 YeshwantFlag.setPower(0);
             }
             telemetry.addData("Arm Moving",armmoving);
-            telemetry.addData("Flag Moving",flagmoving);
+            telemetry.addData("Extender Moving", extenderMoving);
+            //telemetry.addData("Flag Moving",flagmoving);
             telemetry.addData("Flag Position",YeshwantFlag.getCurrentPosition());
             telemetry.addData("Arm Disabled",manualArmControlDisabled);
             frontLeft.setPower(-left);
@@ -342,7 +407,41 @@ public class Testing_MainOp extends LinearOpMode {
             backRight.setPower(drive);
             telemetry.addData("Setting back right power: ", backRight.getPower());
 
+            telemetry.addData("servo Moving: ", servoMoving);
+
             telemetry.update();
         }
+
+    }
+    public void mecanum(Gamepad gamepad){
+
+        double r = Math.hypot(gamepad.left_stick_x, gamepad.left_stick_y);
+        double robotAngle = Math.atan2(gamepad.left_stick_y, gamepad.left_stick_x) - Math.PI / 4;
+        double rightX = -gamepad.right_stick_x;
+        double[] v = new double[4];
+        v[0] = r * Math.cos(robotAngle) + rightX;
+        v[1] = r * Math.sin(robotAngle) - rightX;
+        v[2] = r * Math.sin(robotAngle) + rightX;
+        v[3] = r * Math.cos(robotAngle) - rightX;
+        double max = 0;
+        for (int i = 0; i < 4; i++) {
+            if(Math.abs(v[i]) > max) max = Math.abs(v[i]);
+        }
+        max = Range.clip(max,-1,1);
+        DecimalFormat df = new DecimalFormat("0.00");
+        telemetry.addData("Status", "max: " + max);
+        for (int i = 0; i < 4; i++) {
+            double e = v[i] / max;
+            telemetry.addData("Status", df.format(e) + " " + df.format(v[i]) + " " + df.format(max));
+            v[i] = e;
+        }
+        frontLeft.setPower(v[0]);
+        frontRight.setPower(v[1]);
+        backLeft.setPower(v[2]);
+        backRight.setPower(v[3]);
+        telemetry.addData("Status", v[0]);
+        telemetry.addData("Status", v[1]);
+        telemetry.addData("Status", v[2]);
+        telemetry.addData("Status", v[3]);
     }
 }
