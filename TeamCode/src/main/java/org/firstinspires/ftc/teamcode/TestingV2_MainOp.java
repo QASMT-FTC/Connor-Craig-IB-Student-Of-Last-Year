@@ -16,10 +16,7 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FO
 DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
 package org.firstinspires.ftc.teamcode;
-
-
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -36,10 +33,9 @@ import com.qualcomm.robotcore.util.Range;
 
 import java.text.DecimalFormat;
 
-@TeleOp(name="[Testing] OmniwheelsOp", group="Iterative Opmode")
+@TeleOp(name="[TestingV2] OmniwheelsOp", group="Iterative Opmode")
 
-public class Testing_MainOp extends LinearOpMode {
-
+public class TestingV2_MainOp extends LinearOpMode {
     // Constant to change motor speed by x
     private final double ReduceByRight = 0.1;
     // Configure Items from Control Hub 1:
@@ -62,7 +58,6 @@ public class Testing_MainOp extends LinearOpMode {
     private DcMotor Extender;
     private DcMotor Spinner;
 
-
     private Servo YeshwantFingers;
     // Set up variables for omni driving:
     private double drive;
@@ -77,7 +72,7 @@ public class Testing_MainOp extends LinearOpMode {
     private int armmovmultiplier = 1;
     private boolean manualArmControlDisabled = false;
     private double lastTime = 0;
-    private double armMoveSpeed = 0.3;
+    private double armMoveSpeed = 0.2;
     private double armMoveSlowSpeed = 0.1;
 
     //Extender
@@ -95,13 +90,8 @@ public class Testing_MainOp extends LinearOpMode {
     private boolean manualFingerControlDisabled;
     private Servo ServoRight;
     private Servo ServoLeft;
-    private double target = ServoLeft.MIN_POSITION;
+    private double target = ServoRight.MIN_POSITION;
     private boolean servoMoving = false;
-    private boolean lastX = false;
-
-    //Spinner
-    private boolean lastB = false;
-    private boolean spinnerMoving = false;
 
     @Override
     public void runOpMode() {
@@ -137,8 +127,6 @@ public class Testing_MainOp extends LinearOpMode {
         frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        Spinner.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //Spinner.setTargetPosition(0);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -153,13 +141,11 @@ public class Testing_MainOp extends LinearOpMode {
         YeshwantArms.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         YeshwantFlag.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //Spinner.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Set the zero power behaviour to brake - we'll change it for the smoothness of motion later (Step 2)!
         YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         Extender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Spinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Spinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
@@ -252,30 +238,26 @@ public class Testing_MainOp extends LinearOpMode {
             //ServoLeft.setPosition(ServoLeft.MIN_POSITION);
 
             // Toggle Claw
-            if (gamepad2.x && !lastX) {
-                lastX = true;
+            if (gamepad2.x && ServoLeft.getPosition()!=target) {
                 // Please note it will close when halfway open. This is not a rounding process.
                 manualFingerControlDisabled = true;
-                //if it has arrived at its destination
-                if (ServoLeft.getPosition()==target) {
-                    if (ServoLeft.getPosition() != ServoLeft.MIN_POSITION) {
-                        ServoLeft.setPosition(ServoLeft.MIN_POSITION);
-                        ServoRight.setPosition(ServoLeft.MAX_POSITION);
-                        target = ServoLeft.MIN_POSITION;
-                        servoMoving = true;
-                    } else {
-                        ServoLeft.setPosition(ServoLeft.MAX_POSITION);
-                        ServoRight.setPosition(ServoLeft.MIN_POSITION);
-                        target = ServoLeft.MAX_POSITION;
-                        servoMoving = true;
-                    }
 
+                if (ServoLeft.getPosition()!=ServoLeft.MIN_POSITION) {
+                    ServoLeft.setPosition(ServoLeft.MIN_POSITION);
+                    ServoRight.setPosition(ServoLeft.MAX_POSITION);
+                    target = ServoLeft.MIN_POSITION;
+                    servoMoving = true;
+                }
+                else {
+                    ServoLeft.setPosition(ServoLeft.MAX_POSITION);
+                    ServoRight.setPosition(ServoLeft.MIN_POSITION);
+                    target = ServoLeft.MAX_POSITION;
+                    servoMoving = true;
                 }
 
 
-            } else if (!gamepad2.x){
+            } else {
                 servoMoving = false;
-                lastX = false;
             }
 
             /*
@@ -312,7 +294,6 @@ public class Testing_MainOp extends LinearOpMode {
                 manualFlagControlDisabled = false;
             }
             */
-
 
             if (gamepad2.right_trigger>0) {
                 manualArmControlDisabled = true;
@@ -380,29 +361,8 @@ public class Testing_MainOp extends LinearOpMode {
             }
 
             //Spinner, spin for one whole duck, using B
-            //RUN TO POSITION NOT WORKING
-            /*
-            if (gamepad2.b && !lastB){
-                lastB = true;
-                Spinner.setTargetPosition(Spinner.getCurrentPosition()+5);
-                Spinner.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                Spinner.setPower(1);
-
-
-            } else if (!gamepad2.b){
-                lastB = false;
-            }*/
-
-            //Spinner without run to position
             if (gamepad2.b){
-                Spinner.setPower(1);
-                spinnerMoving = true;
 
-
-
-            } else {
-                Spinner.setPower(0);
-                spinnerMoving = false;
             }
 
 
@@ -463,8 +423,6 @@ public class Testing_MainOp extends LinearOpMode {
             telemetry.addData("Setting back right power: ", backRight.getPower());
 
             telemetry.addData("servo Moving: ", servoMoving);
-            telemetry.addData("Target of servo: ", target);
-            telemetry.addData("Spinner moving: ", spinnerMoving);
 
             telemetry.update();
         }
@@ -501,6 +459,4 @@ public class Testing_MainOp extends LinearOpMode {
         telemetry.addData("Status", v[2]);
         telemetry.addData("Status", v[3]);
     }
-
-
 }
