@@ -144,7 +144,7 @@ public class Testing_MainOp extends LinearOpMode {
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
+        //Set directions for the wheels (some wheels are connected reversed)
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
         backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -404,6 +404,16 @@ public class Testing_MainOp extends LinearOpMode {
                 Spinner.setPower(0);
                 spinnerMoving = false;
             }
+            //Spinner with run to position
+            if (gamepad2.y){
+                Spinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                Spinner.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                Spinner.setTargetPosition(1200);
+                Spinner.setPower(1);
+                Spinner.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                spinnerMoving = true;
+
+            }
 
 
             // Allow Yeshwant Arm override
@@ -471,7 +481,8 @@ public class Testing_MainOp extends LinearOpMode {
 
     }
     public void mecanum(Gamepad gamepad){
-
+        //Find the hypotenuse between the x and y on the gamepad - this will help us figure create a "vector" of the
+        //movement, the direction and magnitude
         double r = Math.hypot(gamepad.left_stick_x, gamepad.left_stick_y);
         double robotAngle = Math.atan2(gamepad.left_stick_y, gamepad.left_stick_x) - Math.PI / 4;
         double rightX = -gamepad.right_stick_x;
