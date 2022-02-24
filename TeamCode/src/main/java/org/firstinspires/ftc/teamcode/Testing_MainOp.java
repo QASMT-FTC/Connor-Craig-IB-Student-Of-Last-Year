@@ -431,6 +431,9 @@ public class Testing_MainOp extends LinearOpMode {
                 armmoving = true;
                 // Give control of flag back to user
                 manualArmControlDisabled = false;
+            } else {
+                // TEST CODE to continously power
+                YeshwantArms.setPower(0.015);
             }
 
             //Extender for arm
