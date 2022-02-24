@@ -140,8 +140,10 @@ public class Testing_MainOp extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         Spinner.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //Spinner.setTargetPosition(0);
-
+        // Start all in run using encoder
+        YeshwantArms.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        Extender.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // Set wheels to float
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -153,10 +155,7 @@ public class Testing_MainOp extends LinearOpMode {
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
         // Reset encoders for Position motors (Step 1)
         YeshwantArms.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        YeshwantArms.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        YeshwantFlag.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         Extender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //Spinner.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Set the zero power behaviour to brake - we'll change it for the smoothness of motion later (Step 2)!
         YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -211,8 +210,6 @@ public class Testing_MainOp extends LinearOpMode {
                 }
             }
 
-            //ServoLeft.setPosition(ServoLeft.MIN_POSITION);
-
             // Toggle Claw
             if (gamepad2.x && !lastX) {
                 lastX = true;
@@ -241,7 +238,6 @@ public class Testing_MainOp extends LinearOpMode {
             }
 
             if (gamepad2.right_trigger>0) {
-                manualArmControlDisabled = true;
                 telemetry.addData("Extending Arm",YeshwantArms.getTargetPosition());
                 YeshwantArms.setTargetPosition(armpos);
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -257,18 +253,13 @@ public class Testing_MainOp extends LinearOpMode {
             telemetry.addData("CP",YeshwantArms.getCurrentPosition());
             telemetry.addData("CPD",YeshwantArms.getTargetPosition());
             // Set the position of Yeshwant's arms
-            if (gamepad2.left_stick_y!=0) {
-                YeshwantArms.setPower(gamepad2.left_stick_y);
-            }
-            /*
-            if (YeshwantArms.getTargetPosition()<=YeshwantArms.getCurrentPosition()+50 && YeshwantArms.getTargetPosition()>=YeshwantArms.getCurrentPosition()-50 && gamepad2.left_stick_y!=0) {
-
+            if (YeshwantArms.getCurrentPosition()<=YeshwantArms.getTargetPosition()+50 && YeshwantArms.getCurrentPosition()>=YeshwantArms.getTargetPosition()-50 && gamepad2.left_stick_y!=0) {
                 telemetry.addLine("Manual up");
                 YeshwantArms.setPower(armMoveSpeed);
                 YeshwantArms.setTargetPosition(YeshwantArms.getTargetPosition()+15);
                 YeshwantArms.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armmoving = true;
             }
-            */
 
             //Extender movement
             if (gamepad2.dpad_up){
@@ -290,6 +281,12 @@ public class Testing_MainOp extends LinearOpMode {
             } else if (!gamepad2.dpad_up && !gamepad2.dpad_down){
                 Extender.setPower(0);
                 extenderMoving = false;
+            }
+            if(armmoving) {
+                YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            }
+            else {
+                YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             }
 
             //Spinner without run to position
@@ -325,42 +322,6 @@ public class Testing_MainOp extends LinearOpMode {
                 } else if (!gamepad2.b) {
                     Spinner.setPower(0);
                 }
-            }
-            /*if (gamepad2.b){
-                Spinner.setPower(1);
-                spinnerMoving = true;
-            } else {
-                Spinner.setPower(0);
-                spinnerMoving = false;
-            }
-            //Spinner with run to position
-            if (gamepad2.y){
-                Spinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                Spinner.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                Spinner.setTargetPosition(1200);
-                Spinner.setPower(1);
-                Spinner.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                spinnerMoving = true;
-
-            }
-
-            if (gamepad2.b
-*/
-
-            if (armmoving) {
-                armmoving = false;
-            }
-            else {
-                YeshwantArms.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                YeshwantArms.setPower(0);
-            }
-            if (flagmoving) {
-                //YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-                flagmoving = false;
-            }
-            else {
-                YeshwantFlag.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                YeshwantFlag.setPower(0);
             }
             telemetry.addData("Arm Moving",armmoving);
             telemetry.addData("Extender Moving", extenderMoving);
